@@ -15,7 +15,7 @@ import {
 } from "type-graphql";
 import { MyContext } from "src/types";
 import { isAuth } from "../middleware/isAuth";
-import { AppDataSource } from "../ormconfig";
+import { AppDataSource } from "../";
 import { Updoot } from "../entities/Updoot";
 import { User } from "../entities/User";
 

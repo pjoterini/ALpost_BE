@@ -10,9 +10,27 @@ import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import cors from "cors";
-import { AppDataSource } from "./ormconfig";
 import { createUserLoader } from "./utils/createUserLoader";
+import path from "path";
+import { DataSource } from "typeorm";
+import { Post } from "./entities/Post";
+import { Updoot } from "./entities/Updoot";
+import { User } from "./entities/User";
 // import { Post } from "./entities/Post";
+
+export const AppDataSource = new DataSource({
+  type: "postgres",
+  host: "localhost",
+  port: 5432,
+  // database: "alpost",
+  // username: "postgres",
+  // password: `${process.env.SQL_PASSWORD}`,
+  url: process.env.DATABASE_URL,
+  logging: true,
+  // synchronize: true,
+  entities: [Post, User, Updoot],
+  migrations: [path.join(__dirname, "./migrations/*")],
+});
 
 const main = async () => {
   await AppDataSource.initialize()
@@ -20,7 +38,7 @@ const main = async () => {
       console.log("typeorm initialize works");
     })
     .catch((error) => console.error(error, "typeorm initialize does not work"));
-  await AppDataSource.runMigrations();
+  // await AppDataSource.runMigrations();
 
   // await Post.delete({});
   // res
