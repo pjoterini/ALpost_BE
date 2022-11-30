@@ -38,7 +38,7 @@ const main = async () => {
       console.log("typeorm initialize works");
     })
     .catch((error) => console.error(error, "typeorm initialize does not work"));
-  // await AppDataSource.runMigrations();
+  await AppDataSource.runMigrations();
 
   // await Post.delete({});
   // res
