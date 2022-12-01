@@ -66,7 +66,7 @@ const main = async () => {
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: __prod__ ? "none" : "lax",
         secure: __prod__,
         domain: __prod__
           ? "alpost-backend-production.up.railway.app"
