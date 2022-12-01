@@ -45,14 +45,13 @@ const main = async () => {
 
   const app = express();
 
-  app.set("trust proxy", 1);
-
   const RedisStore = connectRedis(session);
   const redis = new Redis(process.env.REDIS_URL);
   if (!redis.status) {
     await redis.connect();
   }
 
+  app.set("trust proxy", 1);
   app.use(
     cors({
       origin: [process.env.CORS_ORIGIN],
@@ -69,6 +68,9 @@ const main = async () => {
         httpOnly: true,
         sameSite: "lax",
         secure: __prod__,
+        domain: __prod__
+          ? "alpost-backend-production.up.railway.app"
+          : undefined,
       },
       saveUninitialized: false,
       secret: process.env.SESSION_SECRET,
