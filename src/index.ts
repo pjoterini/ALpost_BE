@@ -6,6 +6,7 @@ import { buildSchema } from "type-graphql";
 import { ApolloServer } from "apollo-server-express";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
+import { UpdootResolver } from "./resolvers/updoot";
 import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
@@ -16,7 +17,6 @@ import { DataSource } from "typeorm";
 import { Post } from "./entities/Post";
 import { Updoot } from "./entities/Updoot";
 import { User } from "./entities/User";
-// import { Post } from "./entities/Post";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -27,10 +27,12 @@ export const AppDataSource = new DataSource({
   // password: `${process.env.SQL_PASSWORD}`,
   url: process.env.DATABASE_URL,
   logging: true,
-  // synchronize: true,
+  // synchronize: __prod__ ? false : true,
   entities: [Post, User, Updoot],
   migrations: [path.join(__dirname, "./migrations/*")],
 });
+
+//
 
 const main = async () => {
   await AppDataSource.initialize()
@@ -38,10 +40,9 @@ const main = async () => {
       console.log("typeorm initialize works");
     })
     .catch((error) => console.error(error, "typeorm initialize does not work"));
-  await AppDataSource.runMigrations();
+  // await AppDataSource.runMigrations();
 
   // await Post.delete({});
-  // res
 
   const app = express();
 
@@ -80,7 +81,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [PostResolver, UserResolver],
+      resolvers: [PostResolver, UpdootResolver, UserResolver],
       validate: false,
     }),
     context: ({ req, res }) => ({

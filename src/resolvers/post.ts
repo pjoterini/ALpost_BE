@@ -25,6 +25,8 @@ class PostInput {
   title: string;
   @Field()
   text: string;
+  @Field()
+  category: string;
 }
 
 @ObjectType()
@@ -34,12 +36,16 @@ class PaginatedPosts {
   @Field()
   hasMore: boolean;
 }
-
+@ObjectType()
+class userPosts {
+  @Field(() => [Post])
+  posts: Post[];
+}
 @Resolver(Post)
 export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() root: Post) {
-    return root.text.slice(0, 50);
+    return root.text.slice(0, 300);
   }
 
   @FieldResolver(() => User)
@@ -56,29 +62,55 @@ export class PostResolver {
   ) {
     const isUpdoot = value != -1;
     const realValue = isUpdoot ? 1 : -1;
-    const { userId } = req.session;
+    const defaultValue = 0;
 
+    const { userId } = req.session;
     const updoot = await Updoot.findOne({ where: { postId, userId } });
 
-    // the user has voted on this post before
-    // and they are changing their vote
-    if (updoot && updoot.value !== realValue) {
+    if (updoot && updoot.value == defaultValue) {
+      // the user tries to vote the same again
       await AppDataSource.transaction(async (tm) => {
         await tm.query(
           `
-        update updoot
-        set value = $1
-        where "postId" = $2 and "userId" = $3
-        `,
+          update updoot
+          set value = $1
+          where "postId" = $2 and "userId" = $3
+          `,
+          [defaultValue, postId, userId]
+        );
+
+        await tm.query(
+          `
+          update post
+          set points = points + $1
+          where id = $2 
+          `,
+          [defaultValue, postId]
+        );
+      });
+    } else if (
+      updoot &&
+      updoot.value !== defaultValue &&
+      updoot.value !== realValue
+    ) {
+      // the user has voted on this post before
+      // and they are changing their vote
+      await AppDataSource.transaction(async (tm) => {
+        await tm.query(
+          `
+          update updoot
+          set value = $1
+          where "postId" = $2 and "userId" = $3
+          `,
           [realValue, postId, userId]
         );
 
         await tm.query(
           `
-        update post
-        set points = points + $1
-        where id = $2 
-        `,
+          update post
+          set points = points + $1
+          where id = $2
+          `,
           [2 * realValue, postId]
         );
       });
@@ -111,10 +143,12 @@ export class PostResolver {
   async posts(
     @Arg("limit", () => Int) limit: number,
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    @Arg("search", () => String) search: string,
     @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
     const realLimit = Math.min(50, limit);
     const realLimitPlusOne = Math.min(50, limit) + 1;
+    search;
 
     const replacements: any[] = [realLimitPlusOne];
 
@@ -128,6 +162,8 @@ export class PostResolver {
       cursorIdx = replacements.length;
     }
 
+    console.log(search);
+
     const posts = await AppDataSource.query(
       `
       select p.*,
@@ -137,27 +173,44 @@ export class PostResolver {
           : 'null as "voteStatus"'
       }
       from post p
-      ${cursor ? `where p."createdAt" < $${cursorIdx}` : ""}
+      
+      ${search != "all" ? `where p."category" = '${search}'` : ""}${
+        cursor
+          ? `${search == "all" ? "where" : "and"} p."createdAt" < $${cursorIdx}`
+          : ""
+      }
+          
       order by p."createdAt" DESC
       limit $1
       `,
       replacements
     );
 
-    // const qb = AppDataSource.getRepository(Post)
-    //   .createQueryBuilder("p")
-    //   .innerJoinAndSelect("p.creator", "u", 'u.id = p."creatorId"')
-    //   .orderBy('p."createdAt"', "DESC")
-    //   .take(realLimitPlusOne);
-    // if (cursor) {
-    //   qb.where('p."createdAt" < :cursor', { cursor: new Date(parseInt(cursor)) });
-    // }
-
-    // const posts = await qb.getMany();
-
     return {
       posts: posts.slice(0, realLimit),
       hasMore: posts.length === realLimitPlusOne,
+    };
+  }
+
+  @Query(() => userPosts)
+  async userPosts(
+    @Arg("userId", () => Int) userId: Number
+  ): Promise<userPosts> {
+    // const userPosts = await AppDataSource.query(
+    //   `
+    //   select p.*,
+    //   from post p
+    //   where p."creator"."username" = '${username}'
+    //   order by p."createdAt" DESC
+    //   `
+    // );
+    const userPosts = await AppDataSource.getRepository(Post)
+      .createQueryBuilder("post")
+      .where("post.creator.id = :userId", { userId: userId })
+      .getMany();
+
+    return {
+      posts: userPosts,
     };
   }
 
@@ -184,11 +237,12 @@ export class PostResolver {
     @Arg("id", () => Int) id: number,
     @Arg("title") title: string,
     @Arg("text") text: string,
+    @Arg("category") category: string,
     @Ctx() { req }: MyContext
   ): Promise<Post | null> {
     const result = await AppDataSource.createQueryBuilder()
       .update(Post)
-      .set({ title, text })
+      .set({ title, text, category })
       .where('id = :id and "creatorId" = :creatorId', {
         id,
         creatorId: req.session.userId,

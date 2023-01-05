@@ -1,4 +1,4 @@
-import { User } from "../entities/User";
+import argon2 from "argon2";
 import { MyContext } from "src/types";
 import {
   Arg,
@@ -11,13 +11,13 @@ import {
   Resolver,
   Root,
 } from "type-graphql";
-import argon2 from "argon2";
-import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
-import { UsernamePasswordInput } from "./UsernamePasswordInput";
-import { validateRegister } from "../utils/validateRegister";
-import { sendEmail } from "../utils/sendEmail";
 import { v4 } from "uuid";
 import { AppDataSource } from "../";
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
+import { User } from "../entities/User";
+import { sendEmail } from "../utils/sendEmail";
+import { validateRegister } from "../utils/validateRegister";
+import { UsernamePasswordInput } from "./UsernamePasswordInput";
 
 @ObjectType()
 class FieldError {
@@ -35,12 +35,17 @@ class UserResponse {
   @Field(() => User, { nullable: true })
   user?: User;
 }
+@ObjectType()
+class Link {
+  @Field()
+  link: String;
+}
 
 @Resolver(User)
 export class UserResolver {
   @FieldResolver(() => String)
   email(@Root() user: User, @Ctx() { req }: MyContext) {
-    // this is the current user and its oky to shem them their own email
+    // this is the current user and its oky to show them their own email
     if (req.session.userId === user.id) {
       return user.email;
     }
@@ -103,15 +108,17 @@ export class UserResolver {
     return { user };
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => Link)
   async forgotPassword(
     @Arg("email") email: string,
     @Ctx() { redis }: MyContext
   ) {
+    let linkFromNodemailer;
+
     const user = await User.findOne({ where: { email } });
     if (!user) {
       // email is not in the database
-      return true;
+      return linkFromNodemailer;
     }
 
     const token = v4();
@@ -120,15 +127,17 @@ export class UserResolver {
       FORGET_PASSWORD_PREFIX + token,
       user.id,
       "EX",
-      60 * 60 * 24 * 3
+      1000 * 60 * 60 * 24 * 3
     );
 
-    await sendEmail(
+    linkFromNodemailer = await sendEmail(
       email,
-      `<a href="http://localhost:3000/change-password/${token}">reset password</a>`
+      `<a href="http://localhost:3000/change-password/${token}">Reset password</a>`
     );
 
-    return true;
+    return {
+      link: linkFromNodemailer,
+    };
   }
 
   @Query(() => User, { nullable: true })
@@ -136,7 +145,6 @@ export class UserResolver {
     if (!req.session.userId) {
       return null;
     }
-
     return User.findOne({ where: { id: req.session.userId } });
   }
 
