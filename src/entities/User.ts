@@ -10,6 +10,8 @@ import {
 } from "typeorm";
 import { Post } from "./Post";
 import { Updoot } from "./Updoot";
+import { Reply } from "./Reply";
+import { Replyupdoot } from "./Replyupdoot";
 
 @ObjectType()
 @Entity()
@@ -32,10 +34,17 @@ export class User extends BaseEntity {
   @Field(() => [Post])
   @OneToMany(() => Post, (post) => post.creator)
   posts: Post[];
+  @Field(() => [Reply])
+  @OneToMany(() => Reply, (reply) => reply.creator)
+  replies: Reply[];
 
   @Field(() => [Updoot])
   @OneToMany(() => Updoot, (updoot) => updoot.user)
   updoots: Updoot[];
+
+  @Field(() => [Replyupdoot])
+  @OneToMany(() => Replyupdoot, (replyupdoot) => replyupdoot.user)
+  replyupdoots: Replyupdoot[];
 
   @Field(() => String)
   @CreateDateColumn({ type: "date" })

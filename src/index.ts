@@ -17,6 +17,9 @@ import { DataSource } from "typeorm";
 import { Post } from "./entities/Post";
 import { Updoot } from "./entities/Updoot";
 import { User } from "./entities/User";
+import { Reply } from "./entities/Reply";
+import { ReplyResolver } from "./resolvers/reply";
+import { Replyupdoot } from "./entities/Replyupdoot";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -28,11 +31,9 @@ export const AppDataSource = new DataSource({
   url: process.env.DATABASE_URL,
   logging: true,
   // synchronize: __prod__ ? false : true,
-  entities: [Post, User, Updoot],
+  entities: [Post, User, Updoot, Replyupdoot, Reply],
   migrations: [path.join(__dirname, "./migrations/*")],
 });
-
-//
 
 const main = async () => {
   await AppDataSource.initialize()
@@ -43,6 +44,8 @@ const main = async () => {
   // await AppDataSource.runMigrations();
 
   // await Post.delete({});
+  // await Reply.delete({});
+  // await Reply.insert({ text: "check2", creatorId: 1, });
 
   const app = express();
 
@@ -81,7 +84,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [PostResolver, UpdootResolver, UserResolver],
+      resolvers: [PostResolver, UpdootResolver, UserResolver, ReplyResolver],
       validate: false,
     }),
     context: ({ req, res }) => ({

@@ -18,6 +18,8 @@ import { isAuth } from "../middleware/isAuth";
 import { AppDataSource } from "../";
 import { Updoot } from "../entities/Updoot";
 import { User } from "../entities/User";
+import { Replyupdoot } from "../entities/Replyupdoot";
+import { Reply } from "../entities/Reply";
 
 @InputType()
 class PostInput {
@@ -162,8 +164,6 @@ export class PostResolver {
       cursorIdx = replacements.length;
     }
 
-    console.log(search);
-
     const posts = await AppDataSource.query(
       `
       select p.*,
@@ -196,14 +196,6 @@ export class PostResolver {
   async userPosts(
     @Arg("userId", () => Int) userId: Number
   ): Promise<userPosts> {
-    // const userPosts = await AppDataSource.query(
-    //   `
-    //   select p.*,
-    //   from post p
-    //   where p."creator"."username" = '${username}'
-    //   order by p."createdAt" DESC
-    //   `
-    // );
     const userPosts = await AppDataSource.getRepository(Post)
       .createQueryBuilder("post")
       .where("post.creator.id = :userId", { userId: userId })
@@ -260,6 +252,7 @@ export class PostResolver {
     @Ctx() { req }: MyContext
   ): Promise<Boolean> {
     const post = await Post.findOne({ where: { id } });
+    const reply = await Reply.findOne({ where: { postid: id } });
     if (!post) {
       return false;
     }
@@ -269,6 +262,8 @@ export class PostResolver {
 
     await Updoot.delete({ postId: id });
     await Post.delete({ id, creatorId: req.session.userId });
+    await Replyupdoot.delete({ replyId: reply?.id });
+    await Reply.delete({ postid: id, creatorId: req.session.userId });
     return true;
   }
 }

@@ -9,20 +9,16 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { Reply } from "./Reply";
-import { Updoot } from "./Updoot";
+import { Post } from "./Post";
+import { Replyupdoot } from "./Replyupdoot";
 import { User } from "./User";
 
 @ObjectType()
 @Entity()
-export class Post extends BaseEntity {
+export class Reply extends BaseEntity {
   @Field()
   @PrimaryGeneratedColumn()
   id!: number;
-
-  @Field()
-  @Column()
-  title!: string;
 
   @Field()
   @Column()
@@ -35,20 +31,25 @@ export class Post extends BaseEntity {
   @Field(() => Int, { nullable: true })
   voteStatus: number | null;
 
+  @Field(() => Int)
+  @Column({ type: "int" })
+  postid: number;
+
+  @Field(() => Post)
+  @ManyToOne(() => Post, (post) => post.replies)
+  post: Post;
+
   @Field()
   @Column()
   creatorId: number;
 
   @Field()
-  @ManyToOne(() => User, (user) => user.posts)
+  @ManyToOne(() => User, (user) => user.replies)
   creator: User;
 
-  @Field(() => [Reply])
-  @OneToMany(() => Reply, (reply) => reply.post)
-  replies: Reply[];
-
-  @OneToMany(() => Updoot, (updoot) => updoot.post)
-  updoots: Updoot[];
+  @Field(() => [Replyupdoot])
+  @OneToMany(() => Replyupdoot, (replyupdoot) => replyupdoot.reply)
+  updoots: Replyupdoot[];
 
   @Field(() => String)
   @CreateDateColumn()
@@ -57,8 +58,4 @@ export class Post extends BaseEntity {
   @Field(() => String)
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @Field()
-  @Column()
-  category!: string;
 }
