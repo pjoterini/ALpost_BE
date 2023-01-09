@@ -30,7 +30,7 @@ export const AppDataSource = new DataSource({
   // password: `${process.env.SQL_PASSWORD}`,
   url: process.env.DATABASE_URL,
   logging: true,
-  // synchronize: __prod__ ? false : true,
+  synchronize: __prod__ ? false : true,
   entities: [Post, User, Updoot, Replyupdoot, Reply],
   migrations: [path.join(__dirname, "./migrations/*")],
 });
@@ -43,9 +43,11 @@ const main = async () => {
     .catch((error) => console.error(error, "typeorm initialize does not work"));
   // await AppDataSource.runMigrations();
 
+  // await Replyupdoot.delete({});
+  // await Updoot.delete({});
   // await Post.delete({});
   // await Reply.delete({});
-  // await Reply.insert({ text: "check2", creatorId: 1, });
+  // await User.delete({});
 
   const app = express();
 

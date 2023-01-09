@@ -13,7 +13,7 @@ import {
 } from "type-graphql";
 import { v4 } from "uuid";
 import { AppDataSource } from "../";
-import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX, __prod__ } from "../constants";
 import { User } from "../entities/User";
 import { sendEmail } from "../utils/sendEmail";
 import { validateRegister } from "../utils/validateRegister";
@@ -132,7 +132,12 @@ export class UserResolver {
 
     linkFromNodemailer = await sendEmail(
       email,
-      `<a href="http://localhost:3000/change-password/${token}">Reset password</a>`
+
+      `<a href="${
+        __prod__
+          ? "https://alpost-frontend.vercel.app/"
+          : "http://localhost:3000"
+      }/change-password/${token}">Reset password</a>`
     );
 
     return {
