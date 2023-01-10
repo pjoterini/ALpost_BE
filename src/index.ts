@@ -74,9 +74,7 @@ const main = async () => {
         httpOnly: true,
         sameSite: __prod__ ? "none" : "lax",
         secure: __prod__,
-        domain: __prod__
-          ? "alpost-backend-production.up.railway.app"
-          : undefined,
+        domain: __prod__ ? "alpost-frontend.vercel.app" : undefined,
       },
       saveUninitialized: false,
       secret: process.env.SESSION_SECRET,
