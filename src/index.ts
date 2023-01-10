@@ -30,7 +30,8 @@ export const AppDataSource = new DataSource({
   // password: `${process.env.SQL_PASSWORD}`,
   url: process.env.DATABASE_URL,
   logging: true,
-  synchronize: __prod__ ? false : true,
+  synchronize: true,
+  // synchronize: __prod__ ? false : true,
   entities: [Post, User, Updoot, Replyupdoot, Reply],
   migrations: [path.join(__dirname, "./migrations/*")],
 });
