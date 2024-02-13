@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, ObjectType } from 'type-graphql'
 import {
   BaseEntity,
   Column,
@@ -6,51 +6,51 @@ import {
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from "typeorm";
-import { Post } from "./Post";
-import { Updoot } from "./Updoot";
-import { Reply } from "./Reply";
-import { Replyupdoot } from "./Replyupdoot";
+  UpdateDateColumn
+} from 'typeorm'
+import { Post } from './Post'
+import { Vote } from './Vote'
+import { Reply } from './Reply'
+import { ReplyVote } from './ReplyVote'
 
 @ObjectType()
 @Entity()
 export class User extends BaseEntity {
   @Field()
   @PrimaryGeneratedColumn()
-  id!: number;
+  id!: number
 
   @Field()
   @Column({ unique: true })
-  username!: string;
+  username!: string
 
   @Field()
   @Column({ unique: true })
-  email!: string;
+  email!: string
 
   @Column()
-  password!: string;
+  password!: string
 
   @Field(() => [Post])
   @OneToMany(() => Post, (post) => post.creator)
-  posts: Post[];
+  posts: Post[]
   @Field(() => [Reply])
   @OneToMany(() => Reply, (reply) => reply.creator)
-  replies: Reply[];
+  replies: Reply[]
 
-  @Field(() => [Updoot])
-  @OneToMany(() => Updoot, (updoot) => updoot.user)
-  updoots: Updoot[];
+  @Field(() => [Vote])
+  @OneToMany(() => Vote, (vote) => vote.user)
+  votes: Vote[]
 
-  @Field(() => [Replyupdoot])
-  @OneToMany(() => Replyupdoot, (replyupdoot) => replyupdoot.user)
-  replyupdoots: Replyupdoot[];
+  @Field(() => [ReplyVote])
+  @OneToMany(() => ReplyVote, (replyvote) => replyvote.user)
+  replyvotes: ReplyVote[]
 
   @Field(() => String)
-  @CreateDateColumn({ type: "date" })
-  createdAt: Date;
+  @CreateDateColumn({ type: 'date' })
+  createdAt: Date
 
   @Field(() => String)
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt: Date
 }

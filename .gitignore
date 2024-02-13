@@ -1,4 +1,7 @@
 node_modules
 .env
-dist
+.env.production
+public
 .yarn
+.vercel
+dist

@@ -1,70 +1,69 @@
-import "dotenv-safe/config";
-import "reflect-metadata";
-import { COOKIE_NAME, __prod__ } from "./constants";
-import express from "express";
-import { buildSchema } from "type-graphql";
-import { ApolloServer } from "apollo-server-express";
-import { PostResolver } from "./resolvers/post";
-import { UserResolver } from "./resolvers/user";
-import { UpdootResolver } from "./resolvers/updoot";
-import Redis from "ioredis";
-import session from "express-session";
-import connectRedis from "connect-redis";
-import cors from "cors";
-import { createUserLoader } from "./utils/createUserLoader";
-import path from "path";
-import { DataSource } from "typeorm";
-import { Post } from "./entities/Post";
-import { Updoot } from "./entities/Updoot";
-import { User } from "./entities/User";
-import { Reply } from "./entities/Reply";
-import { ReplyResolver } from "./resolvers/reply";
-import { Replyupdoot } from "./entities/Replyupdoot";
+import { ApolloServer } from 'apollo-server-express'
+import cors from 'cors'
+import 'dotenv-safe/config'
+import express from 'express'
+import session from 'express-session'
+import Redis from 'ioredis'
+import path from 'path'
+import 'reflect-metadata'
+import { buildSchema } from 'type-graphql'
+import { DataSource } from 'typeorm'
+import { COOKIE_NAME, __prod__ } from './constants'
+import { Post } from './entities/Post'
+import { Reply } from './entities/Reply'
+import { ReplyVote } from './entities/ReplyVote'
+import { User } from './entities/User'
+import { Vote } from './entities/Vote'
+import { PostResolver } from './resolvers/post'
+import { ReplyResolver } from './resolvers/reply'
+import { UserResolver } from './resolvers/user'
+import { VoteResolver } from './resolvers/vote'
+import { createUserLoader } from './utils/createUserLoader'
 
 export const AppDataSource = new DataSource({
-  type: "postgres",
-  host: "localhost",
+  type: 'postgres',
+  host: 'localhost',
   port: 5432,
   // database: "alpost",
   // username: "postgres",
-  // password: `${process.env.SQL_PASSWORD}`,
-  url: process.env.DATABASE_URL,
+  // password: `${process.env.POSTGRES_PASSWORD}`,
+  url: process.env.POSTGRES_URL,
   logging: true,
   synchronize: true,
   // synchronize: __prod__ ? false : true,
-  entities: [Post, User, Updoot, Replyupdoot, Reply],
-  migrations: [path.join(__dirname, "./migrations/*")],
-});
+  entities: [Post, User, Vote, ReplyVote, Reply],
+  migrations: [path.join(__dirname, './migrations/*')]
+})
 
 const main = async () => {
   await AppDataSource.initialize()
     .then(() => {
-      console.log("typeorm initialize works");
+      console.log('TypeORM initialized')
     })
-    .catch((error) => console.error(error, "typeorm initialize does not work"));
+    .catch((error) => console.error(error, 'TypeORM initialization failed'))
   // await AppDataSource.runMigrations();
 
-  // await Replyupdoot.delete({});
-  // await Updoot.delete({});
+  // await ReplyVote.delete({});
+  // await Vote.delete({});
   // await Post.delete({});
   // await Reply.delete({});
   // await User.delete({});
 
-  const app = express();
+  const app = express()
 
-  const RedisStore = connectRedis(session);
-  const redis = new Redis(process.env.REDIS_URL);
+  let RedisStore = require('connect-redis')(session)
+  const redis = new Redis(process.env.REDIS_URL)
   if (!redis.status) {
-    await redis.connect();
+    await redis.connect()
   }
 
-  app.set("trust proxy", 1);
+  app.set('trust proxy', 1)
   app.use(
     cors({
       origin: [process.env.CORS_ORIGIN],
-      credentials: true,
+      credentials: true
     })
-  );
+  )
 
   app.use(
     session({
@@ -73,39 +72,40 @@ const main = async () => {
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
         httpOnly: true,
-        sameSite: __prod__ ? "none" : "lax",
+        sameSite: __prod__ ? 'none' : 'lax',
         secure: __prod__,
-        domain: __prod__ ? ".up.railway.app" : undefined,
+        domain: __prod__ ? '.up.railway.app' : undefined
       },
       saveUninitialized: false,
       secret: process.env.SESSION_SECRET,
-      resave: false,
+      resave: false
     })
-  );
+  )
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [PostResolver, UpdootResolver, UserResolver, ReplyResolver],
-      validate: false,
+      resolvers: [PostResolver, VoteResolver, UserResolver, ReplyResolver],
+      validate: false
     }),
     context: ({ req, res }) => ({
       req,
       res,
       redis,
-      userLoader: createUserLoader(),
-    }),
-  });
+      userLoader: createUserLoader()
+    })
+  })
 
-  await apolloServer.start();
+  await apolloServer.start()
 
   apolloServer.applyMiddleware({
     app,
-    cors: false,
-  });
+    cors: false
+  })
 
-  app.listen(parseInt(process.env.PORT), () => {
-    console.log("server started on http://localhost:4000");
-  });
-};
+  const port = process.env.PORT || 'http://localhost:4000'
+  app.listen(parseInt(port), () => {
+    console.log(`server started on ${port}`)
+  })
+}
 
-main();
+main()
