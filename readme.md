@@ -2,11 +2,15 @@
 
 [App Site Link](https://alpost-frontend-production.up.railway.app/)
 
+[Frontend code](https://github.com/pjoterini/ALpost_FE)
+
+DEPLOYMENT CURRENTLY IN MIGRATION
+
 ## Description
 
-Fullstack app made after tinkering with project which was the final product of completing [Ben Awads "Fullstack React GraphQL TypeScript Tutorial"](https://www.youtube.com/watch?v=I6ypD7qv3Z8&t=16233s&ab_channel=BenAwad). Technologies used: React, TypeScript, GraphQL, URQL/Apollo, Node.js, PostgreSQL, TypeORM, Redis, Next.js, TypeGraphQL, Chakra.
+Fullstack application which allows registred users to create posts aswell as upvote/downvote and reply to them.
 
-## Functionality
+## Navigation
 
 **MAIN PAGE**
 
@@ -14,4 +18,8 @@ As main page loads posts and replies are fetched from database. Cursor type **pa
 
 **REGISTER/LOGIN/LOGOUT**
 
-Authentication is handled with cookies. There is also **Forgot Password** function working(not ready for real production). When you're logged in you have acces to \*\*User Accou
+Authentication is handled with cookies. There is also **Forgot Password** function working(not ready for production). When you're logged in you have acces to **User Account** where data about your previous actions is displayed.
+
+## STACK
+
+Next.js • TypeScript • GraphQL • URQL/Apollo • Node.js • PostgreSQL • TypeORM • Redis • Chakra
